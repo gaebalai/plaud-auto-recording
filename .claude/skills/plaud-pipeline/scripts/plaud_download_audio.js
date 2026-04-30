@@ -137,7 +137,7 @@ async function main() {
     console.log(`목록 요청: ${options.apiBase}/file/simple/web?${listParams}`);
   }
 
-  const listRes = await fetch(`${options.apiBase}/file/simple/web?${listParams}`, { headers });
+  let listRes = await fetch(`${options.apiBase}/file/simple/web?${listParams}`, { headers });
   if (!listRes.ok) {
     const bodyPreview = (await listRes.text().catch(() => '')).slice(0, 300);
     if (options.verbose) {
@@ -150,7 +150,22 @@ async function main() {
     throw new Error(`목록 취득 실패: ${listRes.status} ${listRes.statusText}`);
   }
 
-  const listData = await listRes.json();
+  let listData = await listRes.json();
+
+  // 서버가 region mismatch를 알려주면 (status=-302 + data.domains.api) 자동으로 재시도
+  if (listData && listData.status === -302 && listData.data && listData.data.domains && listData.data.domains.api) {
+    const correctBase = listData.data.domains.api.replace(/\/$/, '');
+    console.warn(`서버 안내: region mismatch — API base를 ${correctBase} 로 자동 전환`);
+    options.apiBase = correctBase;
+    listRes = await fetch(`${correctBase}/file/simple/web?${listParams}`, { headers });
+    if (!listRes.ok) {
+      throw new Error(`재시도 후에도 실패: ${listRes.status} ${listRes.statusText}`);
+    }
+    listData = await listRes.json();
+    console.warn(`💡 .env 에 다음을 추가/수정하면 다음 실행부터 한 번에 처리됩니다:`);
+    console.warn(`    PLAUD_API_BASE=${correctBase}`);
+  }
+
   const allFiles = listData.data_file_list || [];
 
   // "미분류"의 다국어/UI 라벨 변형 — 태그가 없는 파일을 가리킴
