@@ -144,18 +144,36 @@ function runSetup(target, auto) {
   }
 }
 
+function printPrologue() {
+  console.log('');
+  console.log('======================================================');
+  console.log('  PLAUD 자동 녹음 파이프라인 설치');
+  console.log('======================================================');
+  console.log('');
+  console.log('  설치 도중 Plaud 인증 정보를 묻습니다.');
+  console.log('  의존성 설치(5~10분) 동안 미리 토큰을 받아두면 빠릅니다:');
+  console.log('');
+  console.log('    1) 본인 Chrome에서 https://web.plaud.ai 로그인');
+  console.log('    2) ⌘⌥I (개발자도구) → Application → Local Storage');
+  console.log('    3) tokenstr 값 복사 (eyJhbGc... 200~400자)');
+  console.log('');
+  console.log('  (Plaud에 비밀번호 설정 가능하면 password 모드도 OK)');
+  console.log('');
+  console.log('======================================================');
+  console.log('');
+}
+
 function printNextSteps(target) {
   console.log('');
   ok('부트스트랩 완료');
   console.log('');
   info('다음 단계:');
   console.log(`  cd ${target}`);
-  console.log('  # .env 편집 (PLAUD_AUTH_MODE, 자격증명)');
-  console.log('  npm run first-login    # session 모드일 때');
   console.log('  npm run pipeline       # 시험 실행');
-  console.log('  npm run register-cron  # cron 자동 등록');
+  console.log('  npm run register-cron  # cron 자동 등록 (매일 03:00)');
   console.log('');
   console.log('  자세한 시나리오: SCENARIOS.md');
+  console.log('  인증이 막히면: setup.sh 재실행 → 옵션 2 (token 모드)');
 }
 
 function main() {
@@ -183,6 +201,7 @@ function main() {
     return;
   }
 
+  printPrologue();
   runSetup(opts.target, opts.auto);
   printNextSteps(opts.target);
 }

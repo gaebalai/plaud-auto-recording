@@ -53,6 +53,135 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 VAULT_BASE="$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents"
+VERIFIED_API_BASE=""
+
+# ---------- 인증 설정 헬퍼 함수 ----------
+
+# 토큰 유효성 + 어떤 API base가 동작하는지 확인
+verify_plaud_token() {
+    local token="$1"
+    local status
+    for base in "https://api.plaud.ai" "https://api-apne1.plaud.ai"; do
+        status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+            -H "Authorization: Bearer $token" \
+            -H "app-platform: web" \
+            -H "Origin: https://web.plaud.ai" \
+            -H "Referer: https://web.plaud.ai/" \
+            "$base/file/simple/web?skip=0&limit=1&is_trash=0" 2>/dev/null || echo "000")
+        if [[ "$status" == "200" ]]; then
+            VERIFIED_API_BASE="$base"
+            return 0
+        fi
+    done
+    return 1
+}
+
+_write_env_file() {
+    # 인수: AUTH_MODE [추가 줄들...]
+    local auth_mode="$1"; shift
+    {
+        echo "PLAUD_AUTH_MODE=$auth_mode"
+        for line in "$@"; do
+            echo "$line"
+        done
+    } > "$PROJECT_DIR/.env"
+    chmod 600 "$PROJECT_DIR/.env"
+}
+
+_configure_password_mode() {
+    printf "PLAUD 이메일: "
+    read -r email
+    printf "PLAUD 비밀번호: "
+    read -rs password
+    echo ""
+    if [[ -z "$email" || -z "$password" ]]; then
+        cp .env.example .env
+        chmod 600 .env
+        warn "이메일/비밀번호가 비어 있어 .env 템플릿만 생성. 직접 편집해 주세요."
+        return
+    fi
+    _write_env_file "password" "PLAUD_EMAIL=$email" "PLAUD_PASSWORD=$password"
+    ok ".env 작성 완료 (password 모드)"
+}
+
+_configure_token_mode() {
+    cat <<'PROMPT'
+
+== 토큰 받아오기 (5분) ==
+
+  1) 본인 Chrome 또는 Brave에서 https://web.plaud.ai 접속
+  2) 평소처럼 구글로 로그인
+  3) ⌘⌥I (개발자 도구) 열기 → 상단 'Application' 탭
+  4) 왼쪽 트리: Storage → Local Storage → https://web.plaud.ai
+  5) 'tokenstr' (또는 'token', 'access_token') 키의 Value를 통째로 복사
+     (eyJhbGc... 로 시작하는 200~400자 긴 문자열)
+
+PROMPT
+    printf "토큰을 붙여넣으세요 (빈 값 = 나중에 직접 편집): "
+    read -r token
+
+    if [[ -z "$token" ]]; then
+        cp .env.example .env
+        chmod 600 .env
+        info ".env 템플릿이 생성되었습니다. 토큰은 나중에 PLAUD_TOKEN= 라인에 입력하세요."
+        return
+    fi
+
+    info "토큰 검증 중... (Plaud API 호출)"
+    if verify_plaud_token "$token"; then
+        ok "토큰 인증 성공 (API: $VERIFIED_API_BASE)"
+        _write_env_file "token" "PLAUD_TOKEN=$token" "PLAUD_API_BASE=$VERIFIED_API_BASE"
+        ok ".env 작성 완료 (token 모드, chmod 600)"
+    else
+        warn "토큰 검증 실패. 401 또는 네트워크 문제."
+        warn "  - 토큰을 다시 복사해서 PLAUD_TOKEN= 라인에 갱신"
+        warn "  - 또는 PLAUD_API_BASE 를 변경 시도"
+        _write_env_file "token" "PLAUD_TOKEN=$token" "PLAUD_API_BASE=https://api.plaud.ai"
+        ok ".env는 일단 작성됨 (검증 실패해도 보존, 직접 갱신하세요)"
+    fi
+}
+
+_configure_session_mode() {
+    cp .env.example .env
+    chmod 600 .env
+    # 기본 password를 session으로 변경
+    sed -i '' 's|^PLAUD_AUTH_MODE=password|PLAUD_AUTH_MODE=session|' .env
+    ok ".env 작성 완료 (session 모드)"
+    warn "구글 OAuth 자동 로그인은 자주 차단됩니다."
+    info "첫 실행: npm run first-login (브라우저 떠서 직접 구글 로그인)"
+    info "차단되면 './setup.sh' 다시 → 옵션 2(token 모드)로 전환하세요."
+}
+
+configure_env_interactive() {
+    if $ASSUME_YES; then
+        cp .env.example .env
+        chmod 600 .env
+        info "비대화형 모드: .env 템플릿만 생성. 직접 편집하세요."
+        return
+    fi
+
+    cat <<'MENU'
+
+Plaud 계정 인증 방식:
+  1) 비밀번호 (Plaud Web에서 비밀번호 설정 가능한 경우)
+  2) 토큰 직접 입력 (구글 OAuth 단독 / 자동화 차단된 경우) ⭐ 권장
+  3) 구글 OAuth 자동 로그인 (자주 차단됨)
+  s) 일단 템플릿만, 나중에 직접 편집
+
+MENU
+    printf "선택 [1/2/3/s, 기본=2]: "
+    read -r mode_choice
+    case "${mode_choice:-2}" in
+        1) _configure_password_mode ;;
+        2) _configure_token_mode ;;
+        3) _configure_session_mode ;;
+        *)
+            cp .env.example .env
+            chmod 600 .env
+            info ".env 템플릿이 생성되었습니다. 직접 편집해 주세요."
+            ;;
+    esac
+}
 
 # ---------- 1. 시스템 점검 ----------
 hdr "1. 시스템 점검"
@@ -192,8 +321,14 @@ if ! $ASSUME_YES; then
   2) Playwright Chromium 다운로드 (~ 200MB)
   3) Python venv 생성 (.venv/) + faster-whisper 설치 (~ 50MB)
   4) 디렉토리 준비 (input/, logs/, ~/PLAUD-Data, Vault 폴더)
-  5) .env 생성 (없을 때만)
+  5) Plaud 인증 정보 입력 (.env)
   6) 실행 권한 부여
+
+⏱ 의존성 설치(약 5~10분) 동안 미리 토큰을 받아두면 시간 절약됩니다.
+   가장 안정적인 token 모드:
+     • https://web.plaud.ai 로그인 (본인 Chrome)
+     • 개발자도구(⌘⌥I) → Application → Local Storage → tokenstr 복사
+   (Plaud에 비밀번호를 설정해두셨다면 password 모드도 가능합니다)
 EOF
     printf "계속하시겠습니까? [y/N] "
     read -r ans
@@ -327,14 +462,13 @@ else
     warn "Vault 경로가 없어 폴더 생성을 건너뜀: $VAULT_BASE"
 fi
 
-# ---------- 5. .env ----------
-hdr "5. 환경 파일"
-if [[ ! -f .env ]]; then
-    cp .env.example .env
-    ok ".env 생성 (.env.example에서 복사)"
-    warn "에디터로 .env 를 열어 PLAUD_AUTH_MODE 와 자격증명을 확인하세요"
+# ---------- 5. .env (인터랙티브 인증 설정) ----------
+hdr "5. Plaud 인증 정보 (.env)"
+if [[ -f .env ]]; then
+    ok ".env 이미 존재 (덮어쓰지 않음)"
+    info "변경하려면 직접 편집하거나 .env 삭제 후 setup 재실행"
 else
-    ok ".env 존재 (덮어쓰지 않음)"
+    configure_env_interactive
 fi
 
 # ---------- 6. 실행 권한 ----------
