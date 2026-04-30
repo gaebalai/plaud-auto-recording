@@ -13,6 +13,7 @@
   "scripts": {
     "pipeline": "bash .claude/skills/plaud-pipeline/scripts/run_pipeline.sh",
     "first-login": "node .claude/skills/plaud-pipeline/scripts/plaud_session_login.js --first-time",
+    "refresh-token": "bash refresh_token.sh",
     "health": "bash .claude/skills/plaud-pipeline/scripts/health_check.sh",
     "check": "bash setup.sh --check",
     "register-cron": "bash register_cron.sh",

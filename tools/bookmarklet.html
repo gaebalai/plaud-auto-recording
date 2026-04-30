@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>PLAUD Token Extractor — 북마클릿</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+        h1 { font-size: 24px; }
+        h2 { font-size: 18px; margin-top: 32px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+        .bookmarklet { display: inline-block; padding: 12px 20px; background: #0a84ff; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: grab; user-select: none; }
+        .bookmarklet:hover { background: #0070e8; }
+        .step { background: #f6f6f6; border-left: 4px solid #0a84ff; padding: 12px 16px; margin: 12px 0; border-radius: 4px; }
+        code { background: #eee; padding: 2px 6px; border-radius: 3px; font-family: "SF Mono", Menlo, monospace; font-size: 14px; }
+        kbd { background: #fff; border: 1px solid #aaa; border-bottom-width: 2px; border-radius: 3px; padding: 1px 6px; font-family: "SF Mono", Menlo, monospace; font-size: 13px; }
+        .warn { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<h1>🎣 PLAUD 토큰 자동 추출 — Bookmarklet</h1>
+
+<p>PLAUD Web에서 클릭 한 번으로 진짜 동작 토큰을 클립보드에 복사하는 북마클릿. 토큰 만료 시 갱신용으로 가장 빠릅니다.</p>
+
+<h2>1. 설치 (한 번만)</h2>
+
+<p>아래 파란 버튼을 <b>드래그해서 브라우저의 북마크바에 끌어다 놓으세요</b>:</p>
+
+<p style="margin: 24px 0;">
+    <a class="bookmarklet" href="javascript:(()=>{const o=window.fetch,p=XMLHttpRequest.prototype,r=p.setRequestHeader;let c=!1;const h=async t=>{if(c)return;c=!0;window.fetch=o;p.setRequestHeader=r;try{await navigator.clipboard.writeText(t);console.log('%c✅ 토큰 클립보드 복사 ('+t.length+'자)','color:#0a0;font-weight:bold');alert('✅ PLAUD 토큰 클립보드 복사됨\n길이: '+t.length+'자\n\nsetup.sh 또는 npm run refresh-token 에서 Enter를 누르면 자동 사용됩니다.')}catch(e){prompt('클립보드 자동 복사 실패. 직접 복사하세요:',t)}};window.fetch=function(u,i={}){if(i&&i.headers)try{const a=new Headers(i.headers).get('authorization');if(a&&/^Bearer%20eyJ/i.test(a))h(a.replace(/^Bearer\s+/i,''))}catch(e){}return o.apply(this,arguments)};p.setRequestHeader=function(n,v){if(/^authorization$/i.test(n)&&/^Bearer eyJ/i.test(String(v)))h(String(v).replace(/^Bearer\s+/i,''));return r.apply(this,arguments)};console.log('%c🎣 활성화 - 페이지를 클릭하거나 새로고침하세요','color:#08f;font-weight:bold');alert('🎣 PLAUD 토큰 추출 활성화\n\n이제 페이지를 한 번 클릭하거나 새로고침하세요.\n첫 API 호출의 토큰이 클립보드에 자동 복사됩니다.')})();">📋 PLAUD 토큰 추출</a>
+</p>
+
+<div class="warn">
+    <b>북마크바가 안 보이면?</b> Chrome에서 <kbd>⌘ ⇧ B</kbd> 또는 보기 메뉴 → 북마크바 표시.
+</div>
+
+<h2>2. 사용법</h2>
+
+<div class="step">
+    <b>1)</b> 본인 Chrome에서 <code>https://web.plaud.ai</code> 접속, 로그인 상태 확인
+</div>
+<div class="step">
+    <b>2)</b> 메인 화면(녹음 목록) 도달한 상태에서 북마크바의 <b>📋 PLAUD 토큰 추출</b> 클릭
+</div>
+<div class="step">
+    <b>3)</b> "🎣 활성화" 알림 → <b>확인</b> 누르고 페이지를 한 번 클릭하거나 <kbd>⌘ R</kbd> 새로고침
+</div>
+<div class="step">
+    <b>4)</b> "✅ PLAUD 토큰 클립보드 복사됨" 알림 → 클립보드에 진짜 동작 토큰
+</div>
+<div class="step">
+    <b>5)</b> 터미널에서 <code>npm run refresh-token</code> 실행 후 Enter (클립보드 자동 사용)
+</div>
+
+<h2>3. 안전한가요?</h2>
+
+<p>북마클릿은 <b>현재 페이지(plaud.ai)에서만 동작</b>하는 JavaScript입니다. 다른 사이트에서 클릭해도 PLAUD API 헤더가 없으니 아무 일도 안 일어납니다.</p>
+
+<p>하는 일은 단 두 가지:</p>
+<ul>
+    <li><code>window.fetch</code>와 <code>XMLHttpRequest</code>를 wrap해 첫 <code>Authorization: Bearer ...</code> 헤더를 가로챔</li>
+    <li>잡힌 토큰을 <code>navigator.clipboard</code>로 복사하고 자기 자신을 해제</li>
+</ul>
+
+<p>토큰을 외부 서버로 전송하지 않습니다. 모든 처리는 브라우저 내부.</p>
+
+<h2>4. 문제 해결</h2>
+
+<dl>
+    <dt><b>알림이 안 떠요</b></dt>
+    <dd>북마클릿 클릭 후 페이지를 클릭/새로고침해야 첫 API 호출이 발생합니다. 30초 후에도 안 뜨면 페이지 로그아웃 후 재로그인.</dd>
+
+    <dt><b>"클립보드 실패"</b></dt>
+    <dd>Chrome이 클립보드 권한을 거부한 경우. 알림 박스에 토큰이 직접 표시되니 그것을 복사하세요.</dd>
+
+    <dt><b>북마크가 안 끌립니다</b></dt>
+    <dd>Safari에서는 일부 환경에서 드래그 안 됨. Chrome 사용 권장. 또는 우클릭 → "이 링크 북마크에 추가".</dd>
+</dl>
+
+<h2>5. 대안 — 콘솔 한 줄</h2>
+
+<p>북마크 등록이 부담스러우면 <a href="https://github.com/gaebalai/plaud-auto-recording/blob/main/tools/extract-token.console.js">콘솔용 스크립트</a>를 매번 붙여넣어도 됩니다. 동일한 결과.</p>
+
+</body>
+</html>

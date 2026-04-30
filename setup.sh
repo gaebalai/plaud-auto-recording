@@ -108,18 +108,45 @@ _configure_password_mode() {
 _configure_token_mode() {
     cat <<'PROMPT'
 
-== 토큰 받아오기 (5분) ==
+== 토큰 받아오기 ==
 
-  1) 본인 Chrome 또는 Brave에서 https://web.plaud.ai 접속
-  2) 평소처럼 구글로 로그인
-  3) ⌘⌥I (개발자 도구) 열기 → 상단 'Application' 탭
-  4) 왼쪽 트리: Storage → Local Storage → https://web.plaud.ai
-  5) 'tokenstr' (또는 'token', 'access_token') 키의 Value를 통째로 복사
-     (eyJhbGc... 로 시작하는 200~400자 긴 문자열)
+방법 1) 자동 (권장) — 콘솔 인터셉트 + 클립보드 자동 복사
+  본인 Chrome에서 https://web.plaud.ai 접속 + 로그인된 상태에서:
+    a) ⌘⌥I → Console 탭
+    b) 다음 한 줄을 콘솔에 붙여넣기 (Chrome 보안 경고 시 'Allow pasting' 입력):
 
 PROMPT
-    printf "토큰을 붙여넣으세요 (빈 값 = 나중에 직접 편집): "
+    if [[ -f "$PROJECT_DIR/tools/extract-token.console.min.js" ]]; then
+        printf "  "
+        cat "$PROJECT_DIR/tools/extract-token.console.min.js"
+    fi
+    cat <<'PROMPT'
+
+    c) 페이지를 한 번 클릭하거나 ⌘R 새로고침
+    d) 콘솔에 "✅ 토큰 클립보드 복사" 메시지 → 클립보드에 토큰 자동 복사
+    e) 여기로 돌아와서 그냥 Enter
+
+방법 2) 북마클릿 (한 번 등록 후 영구) — tools/bookmarklet.html 열어서 북마크바에 드래그
+  사용 시 Plaud Web에서 북마크 한 번 클릭 → 알림 뒤 클립보드 복사
+
+방법 3) 수동 — Network 탭에서 직접
+  ⌘⌥I → Network → 새로고침 → simple/web 요청 → Headers → authorization: Bearer eyJ...
+
+PROMPT
+    printf "토큰을 클립보드에 받으셨으면 Enter, 직접 붙여넣으려면 토큰: "
     read -r token
+
+    # Enter만 눌렀으면 클립보드에서 가져오기 (macOS pbpaste)
+    if [[ -z "$token" ]]; then
+        if command -v pbpaste >/dev/null 2>&1; then
+            token="$(pbpaste 2>/dev/null || true)"
+            if [[ -n "$token" ]]; then
+                info "클립보드에서 토큰을 받았습니다 (길이: ${#token}자)"
+            else
+                warn "클립보드가 비어있습니다."
+            fi
+        fi
+    fi
 
     if [[ -z "$token" ]]; then
         cp .env.example .env

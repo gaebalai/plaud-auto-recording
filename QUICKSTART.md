@@ -40,22 +40,27 @@ node --version    # v18 이상이면 OK (예: v25.8.0)
 2. 평소처럼 **구글 로그인** (자동화 아니므로 차단 없음)
 3. 메인 화면(녹음 목록) 도달한 상태에서 **`⌘ + Option + I`** (개발자 도구)
 
-#### 방법 A — Network 탭 ⭐ 가장 확실
-4. 상단 탭에서 **Network** 선택
-5. 페이지 **새로고침** (`⌘+R`)
-6. 목록에서 `simple/web`, `filetag` 같은 요청 클릭
-7. 우측 **Headers → Request Headers** 펼치기
-8. **`authorization: Bearer eyJ...`** 라인의 **`eyJ...` 부분만 복사** (Bearer는 빼도 OK)
+세 가지 방법 — setup.sh가 자동으로 메뉴를 보여줍니다. 위로 갈수록 매끄러움:
 
-#### 방법 B — Local Storage (간단하지만 캐시될 수 있음)
-4. 상단 탭에서 **Application** 선택
-5. 좌측 트리: **Storage → Local Storage → `https://web.plaud.ai`**
-6. 키 목록에서 **`tokenstr`** (또는 `token`, `access_token`) 클릭
-7. 우측 Value 영역의 긴 문자열 (`eyJhbGc...`로 시작, 200~400자) **전체 복사**
+#### 방법 1) ⭐ 콘솔 인터셉트 + 클립보드 자동 (setup.sh 기본 옵션)
+- setup.sh가 **콘솔에 붙여넣을 한 줄을 화면에 출력**
+- Chrome Console 탭에 붙여넣기 (보안 경고 시 `Allow pasting`)
+- 페이지 새로고침 → "✅ 토큰 클립보드 복사" 알림
+- 터미널에서 Enter → `pbpaste`로 자동 사용 + 검증
 
-> ⚠ **방법 B에서 401이 떨어지면 방법 A로** — Local Storage가 옛 토큰을 캐시하는 케이스가 있습니다.
+#### 방법 2) 북마클릿 (한 번 등록, 평생 사용)
+- 프로젝트의 `tools/bookmarklet.html` 열기 (`open tools/bookmarklet.html`)
+- 파란 버튼을 **북마크바에 드래그** (한 번만 설정)
+- 이후 토큰 만료 시: Plaud Web에서 북마크 클릭 → 알림 → 새로고침 → 클립보드 복사
+
+#### 방법 3) Network 탭 (수동)
+- DevTools → **Network** 탭
+- 페이지 새로고침 → `simple/web` 같은 요청 클릭
+- Headers → Request Headers의 `authorization: Bearer eyJ...` 의 **`eyJ...` 부분 복사**
+
+> 💡 **LocalStorage의 `tokenstr`은 비추천** — 옛 토큰을 캐시하는 케이스가 있음. 위 1·2·3 모두 진짜 동작 토큰 보장.
 >
-> 💡 토큰을 미리 메모장 같은 곳에 붙여두면 다음 단계에서 곧장 사용 가능
+> `Bearer ` prefix와 앞뒤 공백은 모두 자동 정규화됩니다.
 
 ---
 
@@ -280,6 +285,7 @@ Claude Code에서:
 cd my-recording
 npm run check                # 전체 상태 한눈에
 npm run pipeline             # 수동 실행
+npm run refresh-token        # 토큰 만료 알림 받았을 때 (1분 갱신)
 npm run health               # 토큰 살아있는지
 npm run register-cron:check  # cron 등록 상태
 ```
