@@ -1,6 +1,6 @@
 {
   "name": "plaud-auto-recording",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "PLAUD NotePin 녹음 자동 수집·로컬 Whisper 음성 인식·Obsidian 저장 파이프라인",
   "license": "MIT",
