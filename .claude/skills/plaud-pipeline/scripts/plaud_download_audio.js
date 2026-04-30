@@ -12,11 +12,11 @@ function parseArgs() {
     folderName: '미분류',
     limit: 9999,
     downloadDir: DEFAULT_DOWNLOAD_DIR,
-    moveToFolderId: null,
+    moveToFolderId: process.env.PLAUD_MOVE_TO_FOLDER_ID || null,
     folderId: null,
-    token: null,
+    token: process.env.PLAUD_TOKEN || null,
     verbose: false,
-    apiBase: DEFAULT_API_BASE,
+    apiBase: process.env.PLAUD_API_BASE || DEFAULT_API_BASE,
   };
 
   for (let i = 0; i < args.length; i++) {

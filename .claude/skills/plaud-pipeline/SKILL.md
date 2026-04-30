@@ -55,11 +55,20 @@ bash ${CLAUDE_PROJECT_DIR}/.claude/skills/plaud-pipeline/scripts/run_pipeline.sh
 ## 환경 변수 (`.env`)
 
 프로젝트 루트의 `.env` 파일에 정의 (`.env.example` 참고):
-- `PLAUD_AUTH_MODE` — `password`(기본) 또는 `session`(구글 간편로그인)
+- `PLAUD_AUTH_MODE` — `password`(기본) / `session`(구글 OAuth 자동) / `token`(수동 토큰)
 - `PLAUD_EMAIL`, `PLAUD_PASSWORD` — password 모드일 때만 필요
+- `PLAUD_TOKEN` — token 모드일 때만 필요. Plaud Web 로그인 후 개발자도구의 `localStorage.tokenstr` 값
 - `PLAUD_PROFILE_DIR` — session 모드 프로필 위치(기본 `~/.plaud-pipeline-profile`)
 - `PLAUD_MOVE_TO_FOLDER_ID` — 다운로드 후 옮길 Plaud Web 폴더 ID(선택). Plaud Web URL의 `tagId=` 뒤 값
 - `PLAUD_API_BASE` — `https://api-apne1.plaud.ai`(기본) 또는 `https://api.plaud.ai`로 fallback
+
+## 인증 모드 선택 가이드
+
+| 상황 | 권장 모드 | 메모 |
+|---|---|---|
+| Plaud에 비밀번호 추가 가능 | `password` | 가장 안정. 무인 cron 100% |
+| 구글 OAuth만 가능 + Playwright로 통과됨 | `session` | 자동 갱신 안 됨, 수 주마다 GUI 재로그인 |
+| 구글 OAuth만 가능 + Playwright 차단됨 | `token` | 본인 Chrome에서 토큰 복사. 만료 시 갱신 |
 
 ## 구글 간편로그인 모드 사용법 (session)
 

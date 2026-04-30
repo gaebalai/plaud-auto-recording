@@ -37,10 +37,22 @@ notify() {
 
 TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 
-if [[ "$AUTH_MODE" != "session" ]]; then
-    echo "[$TIMESTAMP] auth_mode=$AUTH_MODE → 헬스체크 불필요"
+if [[ "$AUTH_MODE" == "password" ]]; then
+    echo "[$TIMESTAMP] auth_mode=password → 헬스체크 불필요 (매번 새로 로그인)"
+    exit 0
+elif [[ "$AUTH_MODE" == "token" ]]; then
+    echo "[$TIMESTAMP] auth_mode=token → 토큰 존재 여부만 확인..."
+    if [[ -z "${PLAUD_TOKEN:-}" ]]; then
+        echo "[$TIMESTAMP] ✗ PLAUD_TOKEN이 .env에 없습니다."
+        notify "PLAUD 토큰 누락" ".env에 PLAUD_TOKEN을 설정해 주세요" "Funk"
+        exit 1
+    fi
+    # 실제 만료 여부는 다음 파이프라인 실행 시 401/403으로 검출됨
+    echo "[$TIMESTAMP] ✓ PLAUD_TOKEN 설정됨 (preview: ${PLAUD_TOKEN:0:12}...)"
+    echo "  실제 만료는 다음 다운로드 시 검출됩니다."
     exit 0
 fi
+# 이하 session 모드
 
 echo "[$TIMESTAMP] 세션 헬스체크 시작..."
 

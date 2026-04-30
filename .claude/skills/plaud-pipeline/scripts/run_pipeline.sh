@@ -122,7 +122,41 @@ log "Vault 쓰기 권한 확인 OK"
 # 1단계: 다운로드 (인증 방식별 분기)
 # 자격증명은 환경변수로 자식 프로세스에 상속 → ps에 노출되지 않음
 # ---------------------------------------------------------
-if [[ "$AUTH_MODE" == "session" ]]; then
+if [[ "$AUTH_MODE" == "token" ]]; then
+    log "--- 1단계: 직접 토큰 모드 다운로드 ---"
+
+    if [[ -z "${PLAUD_TOKEN:-}" ]]; then
+        log "오류: .env에 PLAUD_TOKEN을 설정하세요."
+        log "  Plaud Web에 평소처럼 로그인 후 개발자도구 > Application >"
+        log "  Local Storage > tokenstr 값을 복사해 .env에 PLAUD_TOKEN= 으로 붙여넣기."
+        notify "PLAUD 토큰 누락" ".env에 PLAUD_TOKEN을 설정하세요" "Funk"
+        exit 1
+    fi
+
+    log "토큰 길이: ${#PLAUD_TOKEN}자 (preview: ${PLAUD_TOKEN:0:12}...)"
+
+    DL_ARGS=(
+        "$SCRIPT_DIR/plaud_download_audio.js"
+        --download-dir "$INPUT_DIR"
+        --verbose
+    )
+    [[ -n "${PLAUD_MOVE_TO_FOLDER_ID:-}" ]] && DL_ARGS+=(--move-to-folder-id "$PLAUD_MOVE_TO_FOLDER_ID")
+    [[ -n "${PLAUD_API_BASE:-}" ]]          && DL_ARGS+=(--api-base "$PLAUD_API_BASE")
+
+    # PLAUD_TOKEN은 env로 자식에 상속됨 (set -a로 source)
+    node "${DL_ARGS[@]}" 2>&1 | tee -a "$LOG_FILE"
+    DL_STATUS="${PIPESTATUS[0]}"
+    if [[ "$DL_STATUS" -ne 0 && "$DL_STATUS" -ne 2 ]]; then
+        # 401/403 같은 인증 실패라면 토큰 만료 가능성
+        if grep -qE "401|403|토큰" "$LOG_FILE" 2>/dev/null; then
+            notify "PLAUD 토큰 만료" "Plaud Web에서 새 tokenstr을 복사해 .env에 갱신" "Funk"
+        fi
+        fail "다운로드 실패 (exit=$DL_STATUS)"
+    elif [[ "$DL_STATUS" -eq 2 ]]; then
+        log "경고: 일부 파일 다운로드 실패 (exit=2). 계속 진행."
+        PARTIAL=1
+    fi
+elif [[ "$AUTH_MODE" == "session" ]]; then
     log "--- 1-a: 세션에서 토큰 취득 (구글 로그인 모드) ---"
 
     SESSION_ARGS=("$SCRIPT_DIR/plaud_session_login.js" --headless --token-only)
