@@ -228,19 +228,56 @@ hdr "3. Python 의존성"
 # faster-whisper(CTranslate2)는 Python 3.13까지 검증.
 # 3.14 이상이면 brew의 python@3.11을 우선 시도.
 PY_FOR_VENV="python3"
+
+find_python311() {
+    if [[ -x /opt/homebrew/opt/python@3.11/bin/python3.11 ]]; then
+        echo "/opt/homebrew/opt/python@3.11/bin/python3.11"
+    elif [[ -x /usr/local/opt/python@3.11/bin/python3.11 ]]; then
+        echo "/usr/local/opt/python@3.11/bin/python3.11"
+    elif command -v python3.11 >/dev/null 2>&1; then
+        command -v python3.11
+    else
+        echo ""
+    fi
+}
+
 if [[ "$PY_MAJOR" -eq 3 ]] && [[ "$PY_MINOR" -ge 14 ]]; then
     warn "Python ${PY_VER}는 faster-whisper 호환성이 불안정합니다."
-    if [[ -x /opt/homebrew/opt/python@3.11/bin/python3.11 ]]; then
-        PY_FOR_VENV="/opt/homebrew/opt/python@3.11/bin/python3.11"
+
+    # 1) 이미 설치된 python@3.11 탐색
+    PY311="$(find_python311)"
+
+    # 2) 없으면 brew로 자동 설치 시도
+    if [[ -z "$PY311" && "$HAS_BREW" == "true" ]]; then
+        DO_BREW=false
+        if $ASSUME_YES; then
+            DO_BREW=true
+            info "--yes 모드: python@3.11을 자동으로 설치합니다 (5~10분 소요)"
+        else
+            printf "Homebrew로 python@3.11을 자동 설치할까요? (5~10분 소요) [y/N] "
+            read -r ans3
+            [[ "$ans3" == "y" || "$ans3" == "Y" ]] && DO_BREW=true
+        fi
+
+        if $DO_BREW; then
+            info "brew install python@3.11 실행 중..."
+            if brew install python@3.11; then
+                ok "python@3.11 설치 완료"
+                PY311="$(find_python311)"
+            else
+                err "brew install python@3.11 실패"
+                exit 1
+            fi
+        fi
+    fi
+
+    # 3) python@3.11 사용 가능하면 적용
+    if [[ -n "$PY311" ]]; then
+        PY_FOR_VENV="$PY311"
         ok "python@3.11 사용: $PY_FOR_VENV"
-    elif [[ -x /usr/local/opt/python@3.11/bin/python3.11 ]]; then
-        PY_FOR_VENV="/usr/local/opt/python@3.11/bin/python3.11"
-        ok "python@3.11 사용: $PY_FOR_VENV"
-    elif command -v python3.11 >/dev/null 2>&1; then
-        PY_FOR_VENV="$(command -v python3.11)"
-        ok "python3.11 사용: $PY_FOR_VENV"
     else
-        warn "python@3.11을 찾지 못했습니다. faster-whisper 설치가 실패할 수 있습니다."
+        # 4) 그래도 없으면 3.14로 진행할지 사용자 확인
+        warn "python@3.11이 없습니다. faster-whisper 설치가 실패할 수 있습니다."
         info "권장: brew install python@3.11"
         if ! $ASSUME_YES; then
             printf "그래도 Python ${PY_VER}로 진행하시겠습니까? [y/N] "
