@@ -61,13 +61,14 @@ VERIFIED_API_BASE=""
 verify_plaud_token() {
     local token="$1"
     local status
+    # Plaud Web의 기본 화면(분류되지 않음)과 동일하게 categoryId=unorganized 포함
     for base in "https://api.plaud.ai" "https://api-apne1.plaud.ai"; do
         status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
             -H "Authorization: Bearer $token" \
             -H "app-platform: web" \
             -H "Origin: https://web.plaud.ai" \
             -H "Referer: https://web.plaud.ai/" \
-            "$base/file/simple/web?skip=0&limit=1&is_trash=0" 2>/dev/null || echo "000")
+            "$base/file/simple/web?skip=0&limit=1&is_trash=0&categoryId=unorganized" 2>/dev/null || echo "000")
         if [[ "$status" == "200" ]]; then
             VERIFIED_API_BASE="$base"
             return 0

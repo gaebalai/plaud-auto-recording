@@ -14,6 +14,10 @@ function parseArgs() {
     downloadDir: DEFAULT_DOWNLOAD_DIR,
     moveToFolderId: process.env.PLAUD_MOVE_TO_FOLDER_ID || null,
     folderId: process.env.PLAUD_FOLDER_ID || null,
+    // Plaud Web URL의 ?categoryId= 값. 기본 'unorganized' = "분류되지 않음" 화면
+    categoryId: process.env.PLAUD_CATEGORY_ID !== undefined
+        ? process.env.PLAUD_CATEGORY_ID
+        : 'unorganized',
     token: process.env.PLAUD_TOKEN || null,
     verbose: false,
     apiBase: process.env.PLAUD_API_BASE || DEFAULT_API_BASE,
@@ -24,6 +28,7 @@ function parseArgs() {
     if (arg === '--token') options.token = args[++i];
     else if (arg === '--folder-id') options.folderId = args[++i];
     else if (arg === '--folder-name') options.folderName = args[++i];
+    else if (arg === '--category-id') options.categoryId = args[++i];
     else if (arg === '--move-to-folder-id') options.moveToFolderId = args[++i];
     else if (arg === '--download-dir') options.downloadDir = args[++i];
     else if (arg === '--limit') options.limit = Number(args[++i]);
@@ -125,7 +130,12 @@ async function main() {
     sort_by: 'start_time',
     is_desc: 'true',
   });
+  if (options.categoryId) listParams.append('categoryId', options.categoryId);
   if (options.folderId) listParams.append('folderId', options.folderId);
+
+  if (options.verbose) {
+    console.log(`목록 요청: ${options.apiBase}/file/simple/web?${listParams}`);
+  }
 
   const listRes = await fetch(`${options.apiBase}/file/simple/web?${listParams}`, { headers });
   if (!listRes.ok) {
