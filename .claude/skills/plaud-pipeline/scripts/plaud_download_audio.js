@@ -39,11 +39,14 @@ function parseArgs() {
 }
 
 function buildAuthHeaders(token) {
+  // 사용자가 LocalStorage에서 'Bearer eyJ...' 형태를 통째로 복사하는 경우 대비
+  // — Bearer/공백을 정규화해서 한 번만 prefix
+  const cleanToken = String(token).trim().replace(/^[Bb]earer\s+/, '');
   return {
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'ko,en-US;q=0.9,en;q=0.8',
     'app-platform': 'web',
-    'authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+    'authorization': `Bearer ${cleanToken}`,
     'origin': 'https://web.plaud.ai',
     'referer': 'https://web.plaud.ai/',
     'sec-fetch-dest': 'empty',

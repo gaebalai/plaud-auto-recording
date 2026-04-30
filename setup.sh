@@ -128,6 +128,9 @@ PROMPT
         return
     fi
 
+    # 'Bearer ' prefix가 같이 복사된 경우 자동 제거 (앞뒤 공백도 정리)
+    token="$(printf '%s' "$token" | sed -E 's/^[[:space:]]*[Bb]earer[[:space:]]+//; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+
     info "토큰 검증 중... (Plaud API 호출)"
     if verify_plaud_token "$token"; then
         ok "토큰 인증 성공 (API: $VERIFIED_API_BASE)"
