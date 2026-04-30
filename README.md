@@ -174,6 +174,8 @@ npm run register-cron:dry    # 등록 미리보기
 npm run uncron               # cron 항목 제거
 ```
 
+처음 시작하시는 분은 → [`QUICKSTART.md`](QUICKSTART.md) (7단계, 약 30분)
+
 상세 운영 시나리오는 [`SCENARIOS.md`](SCENARIOS.md) 참고.
 
 ## Claude Code에서 사용하기
