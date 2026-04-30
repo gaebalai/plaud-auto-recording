@@ -1,6 +1,6 @@
 {
   "name": "create-plaud-pipeline",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Bootstrap a PLAUD NotePin auto-recording pipeline (Whisper + Obsidian, macOS)",
   "license": "MIT",
   "keywords": [

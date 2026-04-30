@@ -9,11 +9,11 @@ const DEFAULT_DOWNLOAD_DIR = 'downloads/plaud';
 function parseArgs() {
   const args = process.argv.slice(2);
   const options = {
-    folderName: '미분류',
+    folderName: process.env.PLAUD_FOLDER_NAME || '미분류',
     limit: 9999,
     downloadDir: DEFAULT_DOWNLOAD_DIR,
     moveToFolderId: process.env.PLAUD_MOVE_TO_FOLDER_ID || null,
-    folderId: null,
+    folderId: process.env.PLAUD_FOLDER_ID || null,
     token: process.env.PLAUD_TOKEN || null,
     verbose: false,
     apiBase: process.env.PLAUD_API_BASE || DEFAULT_API_BASE,
@@ -143,13 +143,52 @@ async function main() {
   const listData = await listRes.json();
   const allFiles = listData.data_file_list || [];
 
-  const targetFiles = allFiles.filter(f => {
+  // "미분류"의 다국어/UI 라벨 변형 — 태그가 없는 파일을 가리킴
+  const UNTAGGED_ALIASES = new Set([
+    '미분류',
+    '분류되지 않음',
+    'Uncategorized',
+    'untagged',
+    '',
+  ]);
+
+  const fileToTag = (f) => {
     const tagId = (f.filetag_id_list && f.filetag_id_list[0]) ? f.filetag_id_list[0] : null;
-    const tagName = tagId ? tagMap[tagId] : '미분류';
+    const tagName = tagId ? (tagMap[tagId] || `<unknown:${tagId}>`) : null;
+    return { tagId, tagName };
+  };
+
+  const targetFiles = allFiles.filter(f => {
+    const { tagId, tagName } = fileToTag(f);
+    if (options.folderId) {
+      return tagId === options.folderId;
+    }
+    if (UNTAGGED_ALIASES.has(options.folderName)) {
+      // 미분류 동의어 — 태그가 없는 파일
+      return tagId === null;
+    }
     return tagName === options.folderName;
   });
 
   console.log(`"${options.folderName}"에서 ${targetFiles.length}개 파일 발견.`);
+
+  // 매칭 실패 시 사용 가능한 폴더 분포 출력 (사용자 디버깅 도움)
+  if (targetFiles.length === 0 && allFiles.length > 0) {
+    const tagSummary = {};
+    allFiles.forEach(f => {
+      const { tagId } = fileToTag(f);
+      const key = tagId
+        ? (tagMap[tagId] || `<unknown tagId:${tagId}>`)
+        : '<태그없음 (미분류/분류되지 않음/Uncategorized)>';
+      tagSummary[key] = (tagSummary[key] || 0) + 1;
+    });
+    console.warn(`전체 ${allFiles.length}개 파일이 있지만 "${options.folderName}"에 매칭된 파일은 0개입니다.`);
+    console.warn(`현재 발견된 폴더 분포:`);
+    for (const [name, count] of Object.entries(tagSummary)) {
+      console.warn(`  - ${name}: ${count}개`);
+    }
+    console.warn(`해결: .env 에 PLAUD_FOLDER_NAME=<위 목록 중 하나> 추가, 또는 PLAUD_FOLDER_ID=<태그 ID>`);
+  }
 
   let okCount = 0;
   let failCount = 0;
