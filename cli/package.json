@@ -1,0 +1,35 @@
+{
+  "name": "create-plaud-pipeline",
+  "version": "1.0.1",
+  "description": "Bootstrap a PLAUD NotePin auto-recording pipeline (Whisper + Obsidian, macOS)",
+  "license": "MIT",
+  "keywords": [
+    "plaud",
+    "whisper",
+    "obsidian",
+    "transcription",
+    "recording",
+    "automation",
+    "macos",
+    "claude-code"
+  ],
+  "bin": {
+    "create-plaud-pipeline": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gaebalai/plaud-auto-recording.git",
+    "directory": "cli"
+  },
+  "author": "Jaewoo Kim",
+  "scripts": {
+    "test:local": "node index.js _test_target_dir --no-setup"
+  }
+}
