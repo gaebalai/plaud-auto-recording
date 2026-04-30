@@ -38,12 +38,23 @@ node --version    # v18 이상이면 OK (예: v25.8.0)
 
 1. **Chrome** 또는 **Brave**(자동화 아닌 본인 브라우저)에서 https://web.plaud.ai 접속
 2. 평소처럼 **구글 로그인** (자동화 아니므로 차단 없음)
-3. 메인 화면(녹음 목록) 도달한 상태에서 **`⌘ + Option + I`** (개발자 도구 열기)
+3. 메인 화면(녹음 목록) 도달한 상태에서 **`⌘ + Option + I`** (개발자 도구)
+
+#### 방법 A — Network 탭 ⭐ 가장 확실
+4. 상단 탭에서 **Network** 선택
+5. 페이지 **새로고침** (`⌘+R`)
+6. 목록에서 `simple/web`, `filetag` 같은 요청 클릭
+7. 우측 **Headers → Request Headers** 펼치기
+8. **`authorization: Bearer eyJ...`** 라인의 **`eyJ...` 부분만 복사** (Bearer는 빼도 OK)
+
+#### 방법 B — Local Storage (간단하지만 캐시될 수 있음)
 4. 상단 탭에서 **Application** 선택
 5. 좌측 트리: **Storage → Local Storage → `https://web.plaud.ai`**
 6. 키 목록에서 **`tokenstr`** (또는 `token`, `access_token`) 클릭
-7. 우측 Value 영역의 긴 문자열 (`eyJhbGc...`로 시작, 200~400자) **전체 복사** (`⌘+A` → `⌘+C`)
+7. 우측 Value 영역의 긴 문자열 (`eyJhbGc...`로 시작, 200~400자) **전체 복사**
 
+> ⚠ **방법 B에서 401이 떨어지면 방법 A로** — Local Storage가 옛 토큰을 캐시하는 케이스가 있습니다.
+>
 > 💡 토큰을 미리 메모장 같은 곳에 붙여두면 다음 단계에서 곧장 사용 가능
 
 ---
