@@ -159,11 +159,18 @@ cat <<EOF
 cron이 iCloud Drive(Obsidian Vault)와 같은 보호 디렉토리에 접근하려면
 시스템에서 cron에 'Full Disk Access' 권한을 부여해야 합니다.
 
-  1) 시스템 설정 > 개인정보 보호 및 보안 > 전체 디스크 접근 권한
-  2) '+' 버튼 클릭 → ⌘⇧G 입력 → /usr/sbin/cron 입력 → 추가
-  3) 토글을 켭니다
+  1) 시스템 설정 → 개인정보 보호 및 보안 → 전체 디스크 접근 권한
+  2) 하단의 '+' 버튼 클릭
+  3) 파일 선택 창이 뜨면 'Command + Shift + G' 동시에 누르기
+     (한글 입력기가 켜져 있으면 단축키 안 먹힘 → 영문 ABC로 전환)
+  4) 입력란에 /usr/sbin/cron 입력 → Enter
+  5) cron 파일이 자동 선택됨 → '열기' 버튼 클릭
+  6) 목록에 추가된 cron의 토글을 ON
 
-  (또는 'bash' 인터프리터를 같은 절차로 추가해도 됩니다: /bin/bash)
+  (보강 권장: 같은 절차로 /bin/bash 도 추가)
+
+⌘⇧G 가 안 먹힐 때 대안:
+  Finder에서 ⌘⇧G → /usr/sbin 입력 → cron 파일을 시스템 설정 창으로 드래그.
 
 이 권한이 없으면 cron이 조용히 Vault에 쓰지 못합니다.
 권한 부여 후 처음 한 번은 './setup.sh --check' 또는 'npm run health'로 동작 확인을 권장합니다.

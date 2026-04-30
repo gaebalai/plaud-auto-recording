@@ -102,11 +102,19 @@ npm run pipeline
 npm run register-cron                   # 매일 03:00 + 매주 월 09:00 헬스체크
 ```
 
-추가로 한 번만 시스템 설정:
-1. **시스템 설정 → 개인정보 보호 및 보안 → 전체 디스크 접근 권한**
-2. `+` → `⌘⇧G` → `/usr/sbin/cron` 추가 후 토글 켜기
+추가로 한 번만 시스템 설정 (cron이 iCloud Vault에 쓰기 위해 필요):
 
-이게 빠지면 cron이 iCloud Drive(Vault)에 쓰지 못한다.
+1. **시스템 설정** → **개인정보 보호 및 보안** → **전체 디스크 접근 권한**
+2. 하단의 `+` 버튼 클릭
+3. 파일 선택 창에서 **`⌘ + Shift + G`** (Command + Shift + G) 동시 누르기
+   - 한글 입력기 켜져 있으면 단축키 안 먹힘 → 영문(ABC)으로 전환
+4. 입력란에 **`/usr/sbin/cron`** 입력 → Enter
+5. cron 파일 선택된 상태로 열림 → **"열기"** 클릭
+6. 목록의 cron 토글을 **ON**
+
+`⌘⇧G`가 안 먹힐 때: Finder에서 `⌘⇧G` → `/usr/sbin` → cron 파일을 시스템 설정 창에 드래그.
+
+이게 빠지면 cron이 iCloud Drive(Vault)에 쓰지 못한다(파이프라인은 성공으로 보이는데 Transcripts가 안 생김).
 
 ### 점검
 

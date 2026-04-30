@@ -143,8 +143,14 @@ PLAUD_CRON_TIME="0 4 * * *" PLAUD_HEALTH_CRON_TIME="0 8 * * 1" npm run register-
 ### ⚠ macOS Full Disk Access (한 번만 수동)
 
 cron이 iCloud Drive(Obsidian Vault)에 쓰려면 시스템 권한이 필요합니다:
+
 1. 시스템 설정 > 개인정보 보호 및 보안 > 전체 디스크 접근 권한
-2. `+` → `⌘⇧G` → `/usr/sbin/cron` 추가 후 토글 켜기
+2. 하단의 `+` 버튼 클릭
+3. 파일 선택 창에서 **`⌘ + Shift + G`** 동시 누르기 (한글 입력기 켜져 있으면 영문 전환)
+4. 입력란에 **`/usr/sbin/cron`** 입력 → Enter → 선택된 cron의 "열기" 클릭
+5. 목록의 cron 토글 **ON**
+
+대안(⌘⇧G가 안 될 때): Finder에서 `⌘⇧G` → `/usr/sbin` → cron 파일을 시스템 설정 창에 드래그.
 
 이 권한이 없으면 cron 실행은 되지만 Vault에 못 씁니다(파이프라인은 성공으로 보이는데 Transcripts가 안 생김).
 
