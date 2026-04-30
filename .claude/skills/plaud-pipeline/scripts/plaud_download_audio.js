@@ -36,10 +36,15 @@ function parseArgs() {
 function buildAuthHeaders(token) {
   return {
     'accept': 'application/json, text/plain, */*',
+    'accept-language': 'ko,en-US;q=0.9,en;q=0.8',
     'app-platform': 'web',
     'authorization': token.startsWith('Bearer ') ? token : `Bearer ${token}`,
     'origin': 'https://web.plaud.ai',
     'referer': 'https://web.plaud.ai/',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   };
 }
 
@@ -109,7 +114,8 @@ async function main() {
       tagData.data_filetag_list.forEach(t => (tagMap[t.id] = t.name));
     }
   } catch (e) {
-    console.warn('태그 취득 실패, 계속 진행합니다...');
+    if (options.verbose) console.warn(`태그 취득 실패 (${e.message}), 계속 진행합니다...`);
+    else console.warn('태그 취득 실패, 계속 진행합니다...');
   }
 
   const listParams = new URLSearchParams({
@@ -122,7 +128,17 @@ async function main() {
   if (options.folderId) listParams.append('folderId', options.folderId);
 
   const listRes = await fetch(`${options.apiBase}/file/simple/web?${listParams}`, { headers });
-  if (!listRes.ok) throw new Error(`목록 취득 실패: ${listRes.status}`);
+  if (!listRes.ok) {
+    const bodyPreview = (await listRes.text().catch(() => '')).slice(0, 300);
+    if (options.verbose) {
+      console.error(`응답 ${listRes.status} ${listRes.statusText}`);
+      console.error(`응답 본문 (첫 300자): ${bodyPreview}`);
+      console.error('힌트: 401이면 토큰이 만료/무효이거나, API base가 다른 region입니다.');
+      console.error('  - PLAUD_API_BASE=https://api.plaud.ai 시도');
+      console.error('  - 또는 Plaud Web에서 새 토큰 복사');
+    }
+    throw new Error(`목록 취득 실패: ${listRes.status} ${listRes.statusText}`);
+  }
 
   const listData = await listRes.json();
   const allFiles = listData.data_file_list || [];
