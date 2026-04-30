@@ -170,7 +170,22 @@ async function main() {
     return tagName === options.folderName;
   });
 
-  console.log(`"${options.folderName}"에서 ${targetFiles.length}개 파일 발견.`);
+  console.log(`"${options.folderName}"에서 ${targetFiles.length}개 파일 발견. (서버 전체: ${allFiles.length}개)`);
+
+  // 서버 자체가 0개인 경우 — region/토큰 문제 가능성
+  if (allFiles.length === 0) {
+    console.warn(`서버에서 받은 파일 목록이 빈 배열입니다. 가능한 원인:`);
+    console.warn(`  1) PLAUD_API_BASE 가 잘못된 region`);
+    console.warn(`     - 현재: ${options.apiBase}`);
+    console.warn(`     - 토큰의 region에 맞춰 시도: https://api-apne1.plaud.ai (한국/일본)`);
+    console.warn(`     - 또는: https://api.plaud.ai (글로벌)`);
+    console.warn(`  2) 토큰이 발급된 계정과 다른 region`);
+    console.warn(`  3) Plaud Web 새로고침 → "분류되지 않음" 폴더에 파일이 실제로 보이는지 확인`);
+    if (options.verbose) {
+      console.warn(`  응답 키: ${Object.keys(listData).join(', ')}`);
+      console.warn(`  응답 첫 200자: ${JSON.stringify(listData).slice(0, 200)}`);
+    }
+  }
 
   // 매칭 실패 시 사용 가능한 폴더 분포 출력 (사용자 디버깅 도움)
   if (targetFiles.length === 0 && allFiles.length > 0) {
