@@ -229,7 +229,7 @@ hdr "3. Python 의존성"
 # 3.14 이상이면 brew의 python@3.11을 우선 시도.
 PY_FOR_VENV="python3"
 if [[ "$PY_MAJOR" -eq 3 ]] && [[ "$PY_MINOR" -ge 14 ]]; then
-    warn "Python $PY_VER는 faster-whisper 호환성이 불안정합니다."
+    warn "Python ${PY_VER}는 faster-whisper 호환성이 불안정합니다."
     if [[ -x /opt/homebrew/opt/python@3.11/bin/python3.11 ]]; then
         PY_FOR_VENV="/opt/homebrew/opt/python@3.11/bin/python3.11"
         ok "python@3.11 사용: $PY_FOR_VENV"
@@ -243,7 +243,7 @@ if [[ "$PY_MAJOR" -eq 3 ]] && [[ "$PY_MINOR" -ge 14 ]]; then
         warn "python@3.11을 찾지 못했습니다. faster-whisper 설치가 실패할 수 있습니다."
         info "권장: brew install python@3.11"
         if ! $ASSUME_YES; then
-            printf "그래도 Python $PY_VER로 진행하시겠습니까? [y/N] "
+            printf "그래도 Python ${PY_VER}로 진행하시겠습니까? [y/N] "
             read -r ans2
             if [[ "$ans2" != "y" && "$ans2" != "Y" ]]; then
                 err "취소했습니다. brew install python@3.11 후 다시 실행하세요."
